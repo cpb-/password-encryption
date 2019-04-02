@@ -50,6 +50,7 @@ static void display_usage(const char *program)
 int main(int argc, char * argv[])
 {
 	int fd;
+	int i;
 	char salt[6];
 	int option;
 	int escape = 0;
@@ -108,7 +109,7 @@ int main(int argc, char * argv[])
 	salt[5] = '\0';
 
 	password = crypt(argv[optind], salt);
-	for (int i = 0; password[i] != '\0'; i ++) {
+	for (i = 0; password[i] != '\0'; i ++) {
 		if ((escape) && (password[i] == '$'))
 			putc('\\', stdout);
 		fprintf(stdout, "%c", password[i]);
