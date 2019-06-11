@@ -42,6 +42,7 @@ static void display_usage(const char *program)
 	fprintf(stderr, "     -m         MD5 encryption method\n");
 	fprintf(stderr, "     -s length  SHA encryption method\n");
 	fprintf(stderr, "                  length: 256 or 512\n");
+	fprintf(stderr, "     -d         Double the '$' signs.\n");
 	fprintf(stderr, "     -e         Escape the '$' signs.\n");
 	fprintf(stderr, "     -h         This help screen.\n");
 }
@@ -54,13 +55,17 @@ int main(int argc, char * argv[])
 	char salt[6];
 	int option;
 	int escape = 0;
+	int double_dollar_signs = 0;
 	int length;
 	char method = SHA_512_ENCRYPT_METHOD;
 	unsigned int value;
 	char *password;
 
-	while ((option = getopt(argc, argv, "ehms:")) != -1) {
+	while ((option = getopt(argc, argv, "dehms:")) != -1) {
 		switch (option) {
+			case 'd':
+				double_dollar_signs = 1;
+				break;
 			case 'e':
 				escape = 1;
 				break;
@@ -112,6 +117,8 @@ int main(int argc, char * argv[])
 	for (i = 0; password[i] != '\0'; i ++) {
 		if ((escape) && (password[i] == '$'))
 			putc('\\', stdout);
+		if ((double_dollar_signs) && (password[i] == '$'))
+			putc('$', stdout);
 		fprintf(stdout, "%c", password[i]);
 	}
 	putc('\n', stdout);
