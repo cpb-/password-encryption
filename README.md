@@ -16,6 +16,9 @@ The separator is the `$` character wich may lead to problems when the string
 is included in a command evaluated by the shell.
 So the `-e` option ensure that the `$` chararacters are escaped by a `\`.
 
+For Buildroot usage, the `$` sign has to be replaced by `$$`.
+The `-d` (for /double/) option does this.
+
 ### Typical use
 
 The author wrote this tool to create configuration files for Buildroot and
