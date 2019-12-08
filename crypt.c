@@ -32,10 +32,91 @@
 
 #define DEFAULT_SALT_LENGTH      8
 
-char * salt_values = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                     "abcdefghijklmnopqrstuvwxyz"
-                     "0123456789"
-                     "./";
+
+struct crypt_options {
+
+	char encrypt_method;
+	int  sha_key_length;
+	int  salt_length;
+	int  escape_dollar_signs;
+	int  double_dollar_signs;
+
+};
+
+#define DEFAULT_CRYPT_OPTIONS { SHA_256_ENCRYPT_METHOD, 256, DEFAULT_SALT_LENGTH, 0, 0 }
+
+
+static int  parse_command_line_options(int argc, char **argv, struct crypt_options *options);
+static void display_usage(const char *program);
+
+
+
+static char * Salt_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                           "abcdefghijklmnopqrstuvwxyz"
+                           "0123456789"
+                           "./";
+
+
+
+int main(int argc, char * argv[])
+{
+	int fd;
+	int i;
+	char *salt;
+	unsigned char value;
+	char *password;
+	int password_index;
+
+	struct crypt_options options = DEFAULT_CRYPT_OPTIONS;
+
+
+	password_index = parse_command_line_options(argc, argv, &options);
+	if (password_index < 0)
+		exit(EXIT_FAILURE);
+
+
+	if ((salt = malloc(options.salt_length + 4)) == NULL) {
+		fprintf(stderr, "%s: not enough memory to allocate salt string.\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	salt[0] = '$';
+	salt[1] = options.encrypt_method;
+	salt[2] = '$';
+
+	if ((fd = open(RANDOM_GENERATOR_FILE, O_RDONLY)) < 0) {
+		perror(RANDOM_GENERATOR_FILE);
+		exit(EXIT_FAILURE);
+	}
+
+	for (i = 0; i < options.salt_length; i ++) {
+
+		if (read(fd, &value, sizeof(value)) < 0) {
+			perror(RANDOM_GENERATOR_FILE);
+			exit(EXIT_FAILURE);
+		}
+		salt[i + 3] = Salt_table[value % 64];
+	}
+
+	close(fd);
+
+	salt[options.salt_length + 3] = '\0';
+
+	password = crypt(argv[password_index], salt);
+	for (i = 0; password[i] != '\0'; i ++) {
+		if ((options.escape_dollar_signs) && (password[i] == '$'))
+			putc('\\', stdout);
+		if ((options.double_dollar_signs) && (password[i] == '$'))
+			putc('$', stdout);
+		fprintf(stdout, "%c", password[i]);
+	}
+	putc('\n', stdout);
+
+	return EXIT_SUCCESS;
+}
+
+
+
 
 static void display_usage(const char *program)
 {
@@ -51,53 +132,45 @@ static void display_usage(const char *program)
 }
 
 
-int main(int argc, char * argv[])
-{
-	int fd;
-	int i;
-	char *salt;
-	int option;
-	int escape = 0;
-	int double_dollar_signs = 0;
-	int length;
-	int salt_length = DEFAULT_SALT_LENGTH;
-	char method = SHA_512_ENCRYPT_METHOD;
-	unsigned char value;
-	char *password;
 
-	while ((option = getopt(argc, argv, "dehms:S:")) != -1) {
-		switch (option) {
+
+static int parse_command_line_options(int argc, char **argv, struct crypt_options *options)
+{
+
+	int opt;
+
+	while ((opt = getopt(argc, argv, "dehms:S:")) != -1) {
+		switch (opt) {
 			case 'd':
-				double_dollar_signs = 1;
+				options->double_dollar_signs = 1;
 				break;
 			case 'e':
-				escape = 1;
+				options->escape_dollar_signs = 1;
 				break;
 			case 'm':
-				method = MD5_ENCRYPT_METHOD;
+				options->encrypt_method = MD5_ENCRYPT_METHOD;
 				break;
 			case 's':
-				if ((sscanf(optarg, "%d", &length) != 1)
-				 || ((length != 256) && (length != 512))) {
-					fprintf(stderr, "%s: invalid key length for SHA method.\n",
-					                 argv[0]);
-					exit(EXIT_FAILURE);
+				if ((sscanf(optarg, "%d", &options->sha_key_length) != 1)
+				 || ((options->sha_key_length != 256) && (options->sha_key_length != 512))) {
+					fprintf(stderr, "%s: invalid key length for SHA method.\n", argv[0]);
+					return -1;
 				}
-				if (length == 256)
-					method = SHA_256_ENCRYPT_METHOD;
-				if (length == 512)
-					method = SHA_512_ENCRYPT_METHOD;
+				if (options->sha_key_length == 256)
+					options->encrypt_method = SHA_256_ENCRYPT_METHOD;
+				if (options->sha_key_length == 512)
+					options->encrypt_method = SHA_512_ENCRYPT_METHOD;
 				break;
 			case 'S':
-				if ((sscanf(optarg, "%d", &salt_length) != 1)
-				 || (salt_length < 1)) {
+				if ((sscanf(optarg, "%d", &options->salt_length) != 1)
+				 || (options->salt_length < 1)) {
 					fprintf(stderr, "%s: invalid salt length.\n", argv[0]);
-					exit(EXIT_FAILURE);
+					return -1;
 				}
 				break;
 			case 'h':
 				display_usage(argv[0]);
-				exit(EXIT_SUCCESS);
+				return -1;
 		}
 	}
 
@@ -106,42 +179,6 @@ int main(int argc, char * argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	if ((salt = malloc(salt_length + 4)) == NULL) {
-		fprintf(stderr, "%s: not enough memory to allocate salt string.\n", argv[0]);
-		exit(EXIT_FAILURE);
-	}
-
-	salt[0] = '$';
-	salt[1] = method;
-	salt[2] = '$';
-
-	if ((fd = open(RANDOM_GENERATOR_FILE, O_RDONLY)) < 0) {
-		perror(RANDOM_GENERATOR_FILE);
-		exit(EXIT_FAILURE);
-	}
-
-	for (i = 0; i < salt_length; i ++) {
-
-		if (read(fd, &value, sizeof(value)) < 0) {
-			perror(RANDOM_GENERATOR_FILE);
-			exit(EXIT_FAILURE);
-		}
-		salt[i + 3] = salt_values[value % 64];
-	}
-
-	close(fd);
-
-	salt[salt_length + 3] = '\0';
-
-	password = crypt(argv[optind], salt);
-	for (i = 0; password[i] != '\0'; i ++) {
-		if ((escape) && (password[i] == '$'))
-			putc('\\', stdout);
-		if ((double_dollar_signs) && (password[i] == '$'))
-			putc('$', stdout);
-		fprintf(stdout, "%c", password[i]);
-	}
-	putc('\n', stdout);
-
-	return EXIT_SUCCESS;
+	return optind;
 }
+
