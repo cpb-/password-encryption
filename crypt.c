@@ -30,6 +30,8 @@
 
 #define RANDOM_GENERATOR_FILE   "/dev/urandom"
 
+#define DEFAULT_SALT_LENGTH      8
+
 char * salt_values = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                      "abcdefghijklmnopqrstuvwxyz"
                      "0123456789"
@@ -44,6 +46,7 @@ static void display_usage(const char *program)
 	fprintf(stderr, "                  length: 256 or 512\n");
 	fprintf(stderr, "     -d         Double the '$' signs.\n");
 	fprintf(stderr, "     -e         Escape the '$' signs.\n");
+	fprintf(stderr, "     -S <size>  Salt length (default 8).\n");
 	fprintf(stderr, "     -h         This help screen.\n");
 }
 
@@ -52,16 +55,17 @@ int main(int argc, char * argv[])
 {
 	int fd;
 	int i;
-	char salt[6];
+	char *salt;
 	int option;
 	int escape = 0;
 	int double_dollar_signs = 0;
 	int length;
+	int salt_length = DEFAULT_SALT_LENGTH;
 	char method = SHA_512_ENCRYPT_METHOD;
-	unsigned int value;
+	unsigned char value;
 	char *password;
 
-	while ((option = getopt(argc, argv, "dehms:")) != -1) {
+	while ((option = getopt(argc, argv, "dehms:S:")) != -1) {
 		switch (option) {
 			case 'd':
 				double_dollar_signs = 1;
@@ -84,6 +88,13 @@ int main(int argc, char * argv[])
 				if (length == 512)
 					method = SHA_512_ENCRYPT_METHOD;
 				break;
+			case 'S':
+				if ((sscanf(optarg, "%d", &salt_length) != 1)
+				 || (salt_length < 1)) {
+					fprintf(stderr, "%s: invalid salt length.\n", argv[0]);
+					exit(EXIT_FAILURE);
+				}
+				break;
 			case 'h':
 				display_usage(argv[0]);
 				exit(EXIT_SUCCESS);
@@ -95,23 +106,32 @@ int main(int argc, char * argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	if ((salt = malloc(salt_length + 4)) == NULL) {
+		fprintf(stderr, "%s: not enough memory to allocate salt string.\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	salt[0] = '$';
+	salt[1] = method;
+	salt[2] = '$';
+
 	if ((fd = open(RANDOM_GENERATOR_FILE, O_RDONLY)) < 0) {
 		perror(RANDOM_GENERATOR_FILE);
 		exit(EXIT_FAILURE);
 	}
 
-	if (read(fd, &value, sizeof(int)) < 0) {
-		perror(RANDOM_GENERATOR_FILE);
-		exit(EXIT_FAILURE);
+	for (i = 0; i < salt_length; i ++) {
+
+		if (read(fd, &value, sizeof(value)) < 0) {
+			perror(RANDOM_GENERATOR_FILE);
+			exit(EXIT_FAILURE);
+		}
+		salt[i + 3] = salt_values[value % 64];
 	}
+
 	close(fd);
 
-	salt[0] = '$';
-	salt[1] = method;
-	salt[2] = '$';
-	salt[3] = salt_values[value % 64];
-	salt[4] = salt_values[(value / 64) % 64];
-	salt[5] = '\0';
+	salt[salt_length + 3] = '\0';
 
 	password = crypt(argv[optind], salt);
 	for (i = 0; password[i] != '\0'; i ++) {
