@@ -48,6 +48,7 @@ struct crypt_options {
 
 static int  parse_command_line_options(int argc, char **argv, struct crypt_options *options);
 static void display_usage(const char *program);
+static char *get_salt_string(char method, int length);
 
 
 
@@ -60,12 +61,10 @@ static char * Salt_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 int main(int argc, char * argv[])
 {
-	int fd;
-	int i;
 	char *salt;
-	unsigned char value;
 	char *password;
 	int password_index;
+	int i;
 
 	struct crypt_options options = DEFAULT_CRYPT_OPTIONS;
 
@@ -74,33 +73,9 @@ int main(int argc, char * argv[])
 	if (password_index < 0)
 		exit(EXIT_FAILURE);
 
-
-	if ((salt = malloc(options.salt_length + 4)) == NULL) {
-		fprintf(stderr, "%s: not enough memory to allocate salt string.\n", argv[0]);
+	salt = get_salt_string(options.encrypt_method, options.salt_length);
+	if (salt == NULL)
 		exit(EXIT_FAILURE);
-	}
-
-	salt[0] = '$';
-	salt[1] = options.encrypt_method;
-	salt[2] = '$';
-
-	if ((fd = open(RANDOM_GENERATOR_FILE, O_RDONLY)) < 0) {
-		perror(RANDOM_GENERATOR_FILE);
-		exit(EXIT_FAILURE);
-	}
-
-	for (i = 0; i < options.salt_length; i ++) {
-
-		if (read(fd, &value, sizeof(value)) < 0) {
-			perror(RANDOM_GENERATOR_FILE);
-			exit(EXIT_FAILURE);
-		}
-		salt[i + 3] = Salt_table[value % 64];
-	}
-
-	close(fd);
-
-	salt[options.salt_length + 3] = '\0';
 
 	password = crypt(argv[password_index], salt);
 	for (i = 0; password[i] != '\0'; i ++) {
@@ -181,4 +156,46 @@ static int parse_command_line_options(int argc, char **argv, struct crypt_option
 
 	return optind;
 }
+
+
+
+static char *get_salt_string(char method, int length)
+{
+	int fd;
+	int i;
+	char *salt;
+	unsigned char value;
+
+	if ((salt = malloc(length + 4)) == NULL) {
+		fprintf(stderr, "Not enough memory to allocate salt string.\n");
+		return NULL;
+	}
+
+	salt[0] = '$';
+	salt[1] = method;
+	salt[2] = '$';
+
+	if ((fd = open(RANDOM_GENERATOR_FILE, O_RDONLY)) < 0) {
+		perror(RANDOM_GENERATOR_FILE);
+		free(salt);
+		return NULL;
+	}
+
+	for (i = 0; i < length; i ++) {
+
+		if (read(fd, &value, sizeof(value)) < 0) {
+			perror(RANDOM_GENERATOR_FILE);
+			free(salt);
+			return NULL;
+		}
+		salt[i + 3] = Salt_table[value % 64];
+	}
+
+	close(fd);
+
+	salt[length + 3] = '\0';
+
+	return salt;
+}
+
 
