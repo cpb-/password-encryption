@@ -25,6 +25,9 @@ The author wrote this tool to create configuration files for Buildroot and
 Yocto containing users configurations (logins and passwords) without keeping
 clear text passwords directly in the files.
 
+## Author
+
+Christophe BLAESS 2018. <christophe.blaess@logilin.fr>
 
 ## License
 
