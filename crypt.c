@@ -46,9 +46,11 @@ struct crypt_options {
 #define DEFAULT_CRYPT_OPTIONS { SHA_256_ENCRYPT_METHOD, 256, DEFAULT_SALT_LENGTH, 0, 0 }
 
 
-static int  parse_command_line_options(int argc, char **argv, struct crypt_options *options);
-static void display_usage(const char *program);
+
+static int   parse_command_line_options(int argc, char **argv, struct crypt_options *options);
 static char *get_salt_string(char method, int length);
+static void  display_password(const char *password, struct crypt_options *options);
+static void  display_usage(const char *program);
 
 
 
@@ -61,13 +63,10 @@ static char * Salt_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 int main(int argc, char * argv[])
 {
+	struct crypt_options options = DEFAULT_CRYPT_OPTIONS;
 	char *salt;
 	char *password;
 	int password_index;
-	int i;
-
-	struct crypt_options options = DEFAULT_CRYPT_OPTIONS;
-
 
 	password_index = parse_command_line_options(argc, argv, &options);
 	if (password_index < 0)
@@ -78,34 +77,11 @@ int main(int argc, char * argv[])
 		exit(EXIT_FAILURE);
 
 	password = crypt(argv[password_index], salt);
-	for (i = 0; password[i] != '\0'; i ++) {
-		if ((options.escape_dollar_signs) && (password[i] == '$'))
-			putc('\\', stdout);
-		if ((options.double_dollar_signs) && (password[i] == '$'))
-			putc('$', stdout);
-		fprintf(stdout, "%c", password[i]);
-	}
-	putc('\n', stdout);
+
+	display_password(password, &options);
 
 	return EXIT_SUCCESS;
 }
-
-
-
-
-static void display_usage(const char *program)
-{
-	fprintf(stderr, "Usage: %s [options] password\n", program);
-	fprintf(stderr, "  Options:\n");
-	fprintf(stderr, "     -m         MD5 encryption method\n");
-	fprintf(stderr, "     -s length  SHA encryption method\n");
-	fprintf(stderr, "                  length: 256 or 512\n");
-	fprintf(stderr, "     -d         Double the '$' signs.\n");
-	fprintf(stderr, "     -e         Escape the '$' signs.\n");
-	fprintf(stderr, "     -S <size>  Salt length (default 8).\n");
-	fprintf(stderr, "     -h         This help screen.\n");
-}
-
 
 
 
@@ -196,6 +172,37 @@ static char *get_salt_string(char method, int length)
 	salt[length + 3] = '\0';
 
 	return salt;
+}
+
+
+
+static void display_password(const char *password, struct crypt_options *options)
+{
+	int i;
+
+	for (i = 0; password[i] != '\0'; i ++) {
+		if ((options->escape_dollar_signs) && (password[i] == '$'))
+			putc('\\', stdout);
+		if ((options->double_dollar_signs) && (password[i] == '$'))
+			putc('$', stdout);
+		fprintf(stdout, "%c", password[i]);
+	}
+	putc('\n', stdout);
+}
+
+
+
+static void display_usage(const char *program)
+{
+	fprintf(stderr, "Usage: %s [options] password\n", program);
+	fprintf(stderr, "  Options:\n");
+	fprintf(stderr, "     -m         MD5 encryption method\n");
+	fprintf(stderr, "     -s length  SHA encryption method\n");
+	fprintf(stderr, "            length: 256 (default) or 512\n");
+	fprintf(stderr, "     -d         Double the '$' signs.\n");
+	fprintf(stderr, "     -e         Escape the '$' signs.\n");
+	fprintf(stderr, "     -S <size>  Salt length (default 8).\n");
+	fprintf(stderr, "     -h         This help screen.\n");
 }
 
 
