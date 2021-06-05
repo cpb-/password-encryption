@@ -40,10 +40,11 @@ struct crypt_options {
 	int  salt_length;
 	int  escape_dollar_signs;
 	int  double_dollar_signs;
+	char *login;
 
 };
 
-#define DEFAULT_CRYPT_OPTIONS { SHA_256_ENCRYPT_METHOD, 256, DEFAULT_SALT_LENGTH, 0, 0 }
+#define DEFAULT_CRYPT_OPTIONS { SHA_256_ENCRYPT_METHOD, 256, DEFAULT_SALT_LENGTH, 0, 0, NULL }
 
 
 
@@ -90,13 +91,16 @@ static int parse_command_line_options(int argc, char **argv, struct crypt_option
 
 	int opt;
 
-	while ((opt = getopt(argc, argv, "dehms:S:")) != -1) {
+	while ((opt = getopt(argc, argv, "dehl:ms:S:")) != -1) {
 		switch (opt) {
 			case 'd':
 				options->double_dollar_signs = 1;
 				break;
 			case 'e':
 				options->escape_dollar_signs = 1;
+				break;
+			case 'l':
+				options->login = optarg;
 				break;
 			case 'm':
 				options->encrypt_method = MD5_ENCRYPT_METHOD;
@@ -180,6 +184,8 @@ static void display_password(const char *password, struct crypt_options *options
 {
 	int i;
 
+	if (options->login != NULL)
+		printf("%s:", options->login);
 	for (i = 0; password[i] != '\0'; i ++) {
 		if ((options->escape_dollar_signs) && (password[i] == '$'))
 			putc('\\', stdout);
@@ -187,6 +193,8 @@ static void display_password(const char *password, struct crypt_options *options
 			putc('$', stdout);
 		fprintf(stdout, "%c", password[i]);
 	}
+	if (options->login != NULL)
+		printf(":::::::");
 	putc('\n', stdout);
 }
 
@@ -196,13 +204,14 @@ static void display_usage(const char *program)
 {
 	fprintf(stderr, "Usage: %s [options] password\n", program);
 	fprintf(stderr, "  Options:\n");
-	fprintf(stderr, "     -m         MD5 encryption method\n");
-	fprintf(stderr, "     -s length  SHA encryption method\n");
-	fprintf(stderr, "            length: 256 (default) or 512\n");
-	fprintf(stderr, "     -d         Double the '$' signs.\n");
-	fprintf(stderr, "     -e         Escape the '$' signs.\n");
-	fprintf(stderr, "     -S <size>  Salt length (default 8).\n");
-	fprintf(stderr, "     -h         This help screen.\n");
+	fprintf(stderr, "    -m          MD5 hash method\n");
+	fprintf(stderr, "    -s <length> SHA hash method\n");
+	fprintf(stderr, "           length: 256 (default) or 512\n");
+	fprintf(stderr, "    -d          Double the '$' signs.\n");
+	fprintf(stderr, "    -e          Escape the '$' signs.\n");
+	fprintf(stderr, "    -l <login>  Output formatted as a /etc/shadow line\n");
+	fprintf(stderr, "    -S <size>   Salt length (default 8).\n");
+	fprintf(stderr, "    -h          This help screen.\n");
 }
 
 
