@@ -8,7 +8,6 @@ S = "${WORKDIR}/git"
 
 SRC_URI = "git://github.com/cpb-/password-encryption.git;protocol=git"
 SRCREV = "master"
-
 DEPENDS += "libxcrypt"
 RDEPENDS_${PN} += "libxcrypt"
 
@@ -18,7 +17,7 @@ do_compile() {
 
 do_install() {
 	install -m 0755 -d ${D}${bindir}
-	install -m 0755 ${S}/crypt ${D}${bindir}/
+	install -m 0755 ${S}/hash ${D}${bindir}/
 }
 
 

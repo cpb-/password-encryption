@@ -1,4 +1,4 @@
-crypt
+hash
 *.o
 *~
 

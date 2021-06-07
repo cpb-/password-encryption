@@ -1,7 +1,7 @@
 
-EXE = crypt
+EXE = hash
 
-OBJ = crypt.o
+OBJ = hash.o
 
 CROSS_COMPILE ?=
 CC            ?= $(CROSS_COMPILE)gcc
