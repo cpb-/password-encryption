@@ -1,4 +1,4 @@
-DESCRIPTION = "Password hash tool"
+DESCRIPTION = "Password hasher tool"
 HOMEPAGE = "https://github.com/cpb-/password-encryption"
 AUTHOR = "Christophe BLAESS"
 LICENSE="GPLv2"
@@ -17,5 +17,5 @@ do_compile() {
 
 do_install() {
 	install -m 0755 -d ${D}${bindir}
-	install -m 0755 ${S}/hash ${D}${bindir}/
+	install -m 0755 ${S}/hasher ${D}${bindir}/
 }

@@ -1,7 +1,7 @@
 
-EXE = hash
+EXE = hasher
 
-OBJ = hash.o
+OBJ = hasher.o
 
 CROSS_COMPILE ?=
 CC            ?= $(CROSS_COMPILE)gcc
