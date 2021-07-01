@@ -13,15 +13,15 @@ The following packages (or some alternatives) has to be presents:
 * Gnu `gcc`
 * Gnu C library with development headers (`libc-dev-bin`), note that the `crypt` library from the GlibC is used during compilation.
 
-The `Makefile` does only build the `hash` executable file but does not copy
+The `Makefile` does only build the `hasher` executable file but does not copy
 it into any other directory. You may need to copy it by-hand in a directory
 listed in the `PATH` environment variable if you prefer.
 
-Otherwise simply call the program with the `./hash <password>` syntax.
+Otherwise simply call the program with the `./hasher <password>` syntax.
 
 ## Usage
 
-Calling `hash <password>` will display a SHA-512 hashed version of the
+Calling `hasher <password>` will display a SHA-512 hashed version of the
 given password.
 
 ### Options
@@ -30,7 +30,7 @@ Some options allow to configure the hash method.
 
 The  `-m` option allows to use the **MD5 hash** algorithm,
 
-The `-s <length>` tells `hash` to use the **SHA algorithm** with
+The `-s <length>` tells `hasher` to use the **SHA algorithm** with
 lengths of `256` or `512` bits.
 
 The resulting password includes the id of the encryption method, followed by a
@@ -59,9 +59,9 @@ The author wrote this tool to create configuration files for **Buildroot** and
 without keeping clear-text passwords directly in the configuration files.
 
 The `-l <login>` option was added to use on an embedded system where the
-SSH password of a specific account has to be modified by the customer.
+SSH password of a specific account had to be modified by the customer.
 
-In this specific case, the `has` tool had to be installed on the embedded
+In this specific case, the `hasher` tool had to be installed on the embedded
 board system produced with  Yocto Project. A sample Yocto recipe for this
 task is present with the sources (`password-encryption_git.bb`).
 
