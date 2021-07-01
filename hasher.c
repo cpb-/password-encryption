@@ -32,6 +32,13 @@
 
 #define DEFAULT_SALT_LENGTH      8
 
+#ifndef _HASHER_VERSION
+#define _HASHER_VERSION "?"
+#endif
+#define xstr(s) str(s)
+#define str(s) #s
+#define _HASHER_VERSION_STRING  xstr(_HASHER_VERSION)
+
 
 struct crypt_options {
 
@@ -52,7 +59,7 @@ static int   parse_command_line_options(int argc, char **argv, struct crypt_opti
 static char *get_salt_string(char method, int length);
 static void  display_password(const char *password, struct crypt_options *options);
 static void  display_usage(const char *program);
-
+static void  display_version(const char *program);
 
 
 static char * Salt_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -91,7 +98,7 @@ static int parse_command_line_options(int argc, char **argv, struct crypt_option
 
 	int opt;
 
-	while ((opt = getopt(argc, argv, "dehl:ms:S:")) != -1) {
+	while ((opt = getopt(argc, argv, "dehl:ms:S:v")) != -1) {
 		switch (opt) {
 			case 'd':
 				options->double_dollar_signs = 1;
@@ -125,6 +132,9 @@ static int parse_command_line_options(int argc, char **argv, struct crypt_option
 				break;
 			case 'h':
 				display_usage(argv[0]);
+				return -1;
+			case 'v':
+				display_version(argv[0]);
 				return -1;
 		}
 	}
@@ -212,6 +222,16 @@ static void display_usage(const char *program)
 	fprintf(stderr, "    -l <login>  Output formatted as a /etc/shadow line\n");
 	fprintf(stderr, "    -S <size>   Salt length (default 8).\n");
 	fprintf(stderr, "    -h          This help screen.\n");
+}
+
+
+
+static void display_version(const char *program)
+{
+	fprintf(stderr, "%s: hasher v.%s\n", program, _HASHER_VERSION_STRING);
+	fprintf(stderr, "Copyright © 2017 Christophe Blaess. (license GPLv2)\n");
+	fprintf(stderr, "This is free software. You are free to change and redistribute it.\n");
+	fprintf(stderr, "There is NO WARRANTY, to the extent permitted by law.\n");
 }
 
 

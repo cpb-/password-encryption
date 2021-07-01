@@ -5,7 +5,7 @@ OBJ = hasher.o
 
 CROSS_COMPILE ?=
 CC            ?= $(CROSS_COMPILE)gcc
-CFLAGS        += -Wall -W
+CFLAGS        += -Wall -W -D_HASHER_VERSION=$(shell git describe --always 2>/dev/null | tr -d '\r\n')
 LDFLAGS       += -lcrypt
 
 .PHONY: all
