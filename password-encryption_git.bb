@@ -8,8 +8,8 @@ S = "${WORKDIR}/git"
 
 SRC_URI = "git://github.com/cpb-/password-encryption.git;protocol=git"
 SRCREV = "master"
-DEPENDS += "libxcrypt"
-RDEPENDS_${PN} += "libxcrypt"
+DEPENDS += "virtual/crypt"
+RDEPENDS_${PN} += "virtual/crypt"
 
 do_compile() {
 	oe_runmake
