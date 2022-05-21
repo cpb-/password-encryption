@@ -21,7 +21,7 @@ Otherwise simply call the program with the `./hasher <password>` syntax.
 
 ## Usage
 
-Calling `hasher <password>` will display a SHA-512 hashed version of the
+Calling `hasher <password>` will display a SHA-256 hashed version of the
 given password.
 
 ### Options
