@@ -65,6 +65,21 @@ In this specific case, the `hasher` tool had to be installed on the embedded
 board system produced with  Yocto Project. A sample Yocto recipe for this
 task is present with the sources (`password-encryption_git.bb`).
 
+### Openssl
+
+Note that the `openssl` package, frequently available on Linux distros,
+offers the same basic feature:
+
+```
+$ openssl passwd -6 <passwd>
+```
+
+displays the hased password.
+
+Nevertheless `hasher` is interesting, especially in automated production
+environments, by its `-d` and `-e` options.
+
+
 ## Author
 
 Christophe BLAESS 2018-2021. <christophe.blaess@logilin.fr>
